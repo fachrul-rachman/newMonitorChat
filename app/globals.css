@@ -24,3 +24,35 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.chat-shell {
+  height: calc(100vh - 96px);
+  min-height: 480px;
+  overflow: hidden;
+}
+
+@media (max-width: 767px) {
+  .chat-shell {
+    height: 100vh;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+}
+
+.chat-page {
+}
+
+@media (max-width: 767px) {
+  .chat-page {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: var(--background);
+  }
+}
+
+.chat-message-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
