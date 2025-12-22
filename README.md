@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Internal Monitoring Chat app built with [Next.js](https://nextjs.org) and Postgres.
 
-## Getting Started
+## Monitoring Chat overview
 
-First, run the development server:
+- Semua halaman internal ada di bawah path `/monitorchat/*`.
+- Data bersumber dari tabel Postgres (per office+bot) dengan struktur:
+  - `id` (serial / bigint)
+  - `session_id` (text)
+  - `message` (json / jsonb) – payload chat (human/ai)
+  - `created_at` (timestamptz) – waktu lokal Asia/Jakarta (+07)
+- Dashboard dan Chat Viewer hanya menggunakan kolom-kolom di atas.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Environment
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Lihat contoh lengkap di `.env.example`. Variabel penting:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `AUTH_USERNAME`, `AUTH_PASSWORD`, `AUTH_SESSION_SECRET` – login internal dan penandatanganan cookie session.
+- `DB_URL_AMG_SALES`, `DB_URL_AMG_CUSTOMER`, `DB_URL_LMP_SALES`, `DB_URL_LMP_CUSTOMER` – URL Postgres untuk masing-masing office dan bot.
+- Opsional: `PENDING_THRESHOLD_MINUTES`, `DEFAULT_DATE_RANGE_DAYS`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Jika salah satu URL DB tidak di-set, context tersebut akan disembunyikan dari filter, dan ada catatan admin di UI.
 
-## Learn More
+## Menjalankan secara lokal
 
-To learn more about Next.js, take a look at the following resources:
+1. Salin `.env.example` ke `.env` dan sesuaikan nilainya.
+2. Instal dependensi:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   ```bash
+   npm install
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. Jalankan dev server:
 
-## Deploy on Vercel
+   ```bash
+   npm run dev
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+4. Buka `http://localhost:3000/monitorchat/login` lalu login dengan credential sesuai `.env`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `/monitorchat` → Dashboard (ringkasan sesi, response time, sesi pending, kata terbanyak).
+- `/monitorchat/chat` → Chat Viewer (daftar sesi + tampilan chat mirip WhatsApp, auto-refresh).
+
+## Database indexes (disarankan)
+
+Untuk performa query yang lebih baik, administrator DB disarankan menambahkan index berikut di tabel log chat:
+
+- Index pada `created_at`
+- Index gabungan pada `(session_id, created_at)`
