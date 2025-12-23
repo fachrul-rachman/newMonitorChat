@@ -13,7 +13,7 @@ type LoginPageProps = {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const error = params?.error;
-  const redirectTo = params?.redirectTo ?? "/monitorchat";
+  const redirectTo = params?.redirectTo ?? "/";
   const configured = isAuthConfigured();
 
   return (
@@ -42,11 +42,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             Login tidak dapat diproses karena konfigurasi AUTH belum lengkap.
           </div>
         )}
-        <form
-          method="POST"
-          action="/monitorchat/api/login"
-          className="space-y-4"
-        >
+        <form method="POST" action="/api/login" className="space-y-4">
           <input type="hidden" name="redirectTo" value={redirectTo} />
           <div className="space-y-1 text-sm">
             <label

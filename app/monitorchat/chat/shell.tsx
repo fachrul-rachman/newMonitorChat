@@ -83,7 +83,7 @@ export default function ChatShell() {
     async function loadSessionsOnce() {
       setState((prev) => ({ ...prev, loadingSessions: true }));
       try {
-        const res = await fetch(`/monitorchat/api/sessions?${queryString}`, {
+        const res = await fetch(`/api/sessions?${queryString}`, {
           cache: "no-store",
         });
         if (!res.ok) {
@@ -145,7 +145,7 @@ export default function ChatShell() {
       }));
       try {
         const res = await fetch(
-          `/monitorchat/api/chat?sid=${encodeURIComponent(compositeId)}`,
+          `/api/chat?sid=${encodeURIComponent(compositeId)}`,
           { cache: "no-store" },
         );
         if (!res.ok) {

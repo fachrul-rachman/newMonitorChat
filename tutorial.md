@@ -63,7 +63,7 @@ npm install
   npm run dev
   ```
 
-  Buka `http://localhost:3000/monitorchat/login` di browser.
+  Buka `http://localhost:3000/login` di browser.
 
 - Build & production lokal:
 
@@ -91,10 +91,10 @@ npm install
 
 ## 6. Penggunaan dasar
 
-1. Buka `/monitorchat/login`, masukkan `AUTH_USERNAME` dan `AUTH_PASSWORD`.
+1. Buka `/login`, masukkan `AUTH_USERNAME` dan `AUTH_PASSWORD`.
 2. Setelah login:
-   - `/monitorchat` menampilkan Dashboard (ringkasan sesi, response time, sesi pending).
-   - `/monitorchat/chat` menampilkan Chat Viewer:
+   - `/` menampilkan Dashboard (ringkasan sesi, response time, sesi pending).
+   - `/chat` menampilkan Chat Viewer:
      - Sidebar: daftar sesi dengan filter dan pencarian `session_id`.
      - Panel kanan: tampilan chat mirip WhatsApp (human kiri, AI kanan).
 3. Gunakan filter Office / Bot / Date range untuk membatasi data.

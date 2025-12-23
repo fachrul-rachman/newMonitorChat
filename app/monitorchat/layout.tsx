@@ -18,13 +18,13 @@ export default function MonitorChatLayout({
           </div>
           <nav className="flex items-center gap-3 text-sm">
             <Link
-              href="/monitorchat"
+              href="/"
               className="rounded px-2 py-1 hover:bg-zinc-100"
             >
               Dashboard
             </Link>
             <Link
-              href="/monitorchat/chat"
+              href="/chat"
               className="rounded px-2 py-1 hover:bg-zinc-100"
             >
               Chat Viewer

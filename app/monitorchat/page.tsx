@@ -63,7 +63,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     const token = store.get(SESSION_COOKIE_NAME)?.value;
 
     if (!token || !verifySessionCookie(token, authEnv.secret)) {
-      redirect("/monitorchat/login?redirectTo=/monitorchat");
+      redirect("/login?redirectTo=/");
     }
   }
 

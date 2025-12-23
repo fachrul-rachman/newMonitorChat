@@ -15,7 +15,7 @@ export default async function ChatPage() {
     const token = store.get(SESSION_COOKIE_NAME)?.value;
 
     if (!token || !verifySessionCookie(token, authEnv.secret)) {
-      redirect("/monitorchat/login?redirectTo=/monitorchat/chat");
+      redirect("/login?redirectTo=/chat");
     }
   }
 
