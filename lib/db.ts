@@ -105,8 +105,8 @@ export async function queryContext<T = unknown>(
   if (!pool) {
     return [];
   }
-  const result = await pool.query<T>(text, values);
-  return result.rows;
+  const result = await pool.query(text, values);
+  return result.rows as T[];
 }
 
 export type ChatRow = {
