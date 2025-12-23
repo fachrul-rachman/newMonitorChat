@@ -6,7 +6,6 @@ import {
   createSessionCookie,
   getAuthEnv,
 } from "../../../../lib/auth";
-const BASE_URL = process.env.PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_BASE_URL;
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
@@ -16,36 +15,31 @@ export async function POST(request: NextRequest) {
 
   const authEnv = getAuthEnv();
   if (!authEnv) {
-    const url = new URL("/login", (BASE_URL ?? request.nextUrl.origin));
-    url.searchParams.set("error", "config");
+    const params = new URLSearchParams();
+    params.set("error", "config");
     if (redirectTo) {
-      url.searchParams.set("redirectTo", redirectTo);
+      params.set("redirectTo", redirectTo);
     }
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(`/login?${params.toString()}`);
   }
 
   const usernameOk = constantTimeCompare(username, authEnv.username);
   const passwordOk = constantTimeCompare(password, authEnv.password);
 
   if (!usernameOk || !passwordOk) {
-    const url = new URL("/login", (BASE_URL ?? request.nextUrl.origin));
-    url.searchParams.set("error", "1");
+    const params = new URLSearchParams();
+    params.set("error", "1");
     if (redirectTo) {
-      url.searchParams.set("redirectTo", redirectTo);
+      params.set("redirectTo", redirectTo);
     }
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(`/login?${params.toString()}`);
   }
 
   const cookieValue = createSessionCookie(authEnv.username, authEnv.secret);
-  const redirectUrl = new URL(
-    redirectTo && redirectTo.startsWith("/")
-      ? redirectTo
-      : "/",
-    (BASE_URL ?? request.nextUrl.origin)
-,
-  );
+  const finalPath =
+    redirectTo && redirectTo.startsWith("/") ? redirectTo : "/";
 
-  const response = NextResponse.redirect(redirectUrl);
+  const response = NextResponse.redirect(finalPath);
   response.cookies.set({
     name: SESSION_COOKIE_NAME,
     value: cookieValue,
