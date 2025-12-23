@@ -112,6 +112,7 @@ export async function queryContext<T = unknown>(
 export type ChatRow = {
   id: number;
   session_id: string;
-  message: unknown;
+  role: "human" | "ai";
+  content: string;
   created_at: Date;
 };

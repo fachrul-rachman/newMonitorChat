@@ -1,4 +1,4 @@
-# Monitoring Chat – Tutorial (Windows & Linux)
+# Monitoring Chat Tutorial (Windows & Linux)
 
 ## 1. Persiapan lingkungan
 
@@ -34,12 +34,14 @@
 
 3. Tabel yang diharapkan (di setiap DB):
 
-- Nama tabel: `n8n_chat_histories`
+- Nama tabel: `chat_messages`
 - Kolom:
      - `id` (serial / bigint, primary key)
      - `session_id` (text)
-     - `message` (jsonb) – berisi `type`, `content`, dst.
-     - `created_at` (timestamptz) – disimpan dalam waktu lokal Asia/Jakarta (+07).
+     - `seq` (integer) - urutan pesan dalam satu sesi (1, 2, 3, ...).
+     - `role` (text) - berisi `human` atau `ai`.
+     - `content` (text) - isi pesan UTF-8, bisa mengandung line break/`enter`.
+     - `created_at` (timestamptz) - disimpan dalam waktu lokal Asia/Jakarta (+07).
 
 ## 3. Instalasi dependensi
 
@@ -72,7 +74,7 @@ npm install
   npm start
   ```
 
-## 5. Perilaku multi-DB (1–4 URL terkonfigurasi)
+## 5. Perilaku multi-DB (1-4 URL terkonfigurasi)
 
 - Jika keempat URL DB terisi:
   - Filter Office: `AMG | LMP | All`
@@ -82,7 +84,7 @@ npm install
 - Jika hanya sebagian URL di-set:
   - Context tanpa URL otomatis disembunyikan dari pilihan filter.
   - Di Dashboard dan Chat Viewer akan muncul catatan admin seperti
-    “DB belum terkonfigurasi” untuk context yang kosong.
+    "DB belum terkonfigurasi" untuk context yang kosong.
   - Aplikasi tetap berjalan dengan context yang tersedia saja.
 
 - Jika hanya 1 DB terisi:
@@ -98,7 +100,7 @@ npm install
      - Sidebar: daftar sesi dengan filter dan pencarian `session_id`.
      - Panel kanan: tampilan chat mirip WhatsApp (human kiri, AI kanan).
 3. Gunakan filter Office / Bot / Date range untuk membatasi data.
-4. Klik sesi untuk melihat detail percakapan. Gunakan toggle “Raw JSON” untuk debug.
+4. Klik sesi untuk melihat detail percakapan.
 
 ## 7. Troubleshooting dasar
 
@@ -108,12 +110,12 @@ npm install
 
 - Dashboard kosong:
   - Cek koneksi ke DB (URL benar, host/port terbuka).
-  - Pastikan tabel `n8n_chat_histories` berisi data dalam rentang tanggal terpilih.
+  - Pastikan tabel `chat_messages` berisi data dalam rentang tanggal terpilih.
   - Pastikan kolom `created_at` diisi dengan timezone Asia/Jakarta (+07).
 
 - Chat Viewer tidak menampilkan pesan:
-  - Pastikan ada baris dengan `session_id` yang sama pada tabel `n8n_chat_histories`.
-  - Pastikan field `message` berformat JSON dengan `type` dan `content`.
+  - Pastikan ada baris dengan `session_id` yang sama pada tabel `chat_messages`.
+  - Pastikan kolom `role` diisi `human` / `ai` dan kolom `content` berisi teks percakapan.
 
 - Sebagian filter Office/Bot hilang:
   - Itu berarti URL DB terkait belum dikonfigurasi. Cek kembali `.env`.

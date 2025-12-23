@@ -47,31 +47,24 @@ async function getMessagesForSession(
   const rows = await queryContext<ChatRow>(
     context,
     `
-      SELECT id, session_id, message, created_at
-      FROM n8n_chat_histories
+      SELECT id, session_id, role, content, created_at
+      FROM chat_messages
       WHERE session_id = $1
-      ORDER BY created_at ASC
+      ORDER BY created_at ASC, seq ASC
       LIMIT 1000
     `,
     [parts.sessionId],
   );
 
   const messages: MessageView[] = rows.map((row) => {
-    const message = row.message as unknown as { type?: unknown; content?: unknown };
-    const type = typeof message?.type === "string" ? message.type : "other";
-    const content =
-      typeof message?.content === "string"
-        ? message.content
-        : JSON.stringify(message ?? {}, null, 2);
-
-    const role: "human" | "ai" | "other" =
-      type === "human" || type === "ai" ? type : "other";
-
     return {
       id: row.id,
-      role,
-      content,
-      raw: message,
+      role: row.role,
+      content: row.content,
+      raw: {
+        role: row.role,
+        content: row.content,
+      },
       createdAt: formatTimestamp(new Date(row.created_at)),
     };
   });

@@ -1,6 +1,11 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { ParsedFilters, formatTimestamp, getDateRange, parseFilters } from "../../lib/dateRange";
+import {
+  ParsedFilters,
+  formatTimestamp,
+  getDateRange,
+  parseFilters,
+} from "../../lib/dateRange";
 import {
   DbContext,
   filterContexts,
@@ -12,6 +17,13 @@ import {
   getAuthEnv,
   verifySessionCookie,
 } from "../../lib/auth";
+import { FilterBar } from "./components/FilterBar";
+import { KpiCard } from "./components/KpiCard";
+import {
+  SessionStatus,
+  SessionTable,
+  type SessionTableRow,
+} from "./components/SessionTable";
 
 type DashboardPageProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -90,284 +102,176 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       getTopWords(activeContexts, start, end),
     ]);
 
+  const pendingIds = new Set(pendingSessions.map((s) => s.id));
+
+  const tableRows: SessionTableRow[] = recentSessions.map((session) => {
+    const isOverdue = pendingIds.has(session.id);
+
+    let status: SessionStatus = "Closed";
+    if (isOverdue) {
+      status = "Overdue";
+    } else if (session.aiCount === 0 && session.humanCount > 0) {
+      status = "Open";
+    } else if (
+      session.messageCount > 20 ||
+      (session.humanCount > 0 && session.aiCount > 0)
+    ) {
+      status = "Needs attention";
+    }
+
+    return {
+      id: session.id,
+      sessionId: session.sessionId,
+      office: session.office,
+      bot: session.bot,
+      contextLabel: session.contextLabel,
+      lastActivityLabel: formatTimestamp(session.lastActivity),
+      messageCount: session.messageCount,
+      humanCount: session.humanCount,
+      aiCount: session.aiCount,
+      status,
+    };
+  });
+
+  const hasResponseSamples =
+    responseTimes.medianSeconds != null && responseTimes.medianSeconds > 0 &&
+    responseTimes.p95Seconds != null && responseTimes.p95Seconds > 0;
+
+  const formatSeconds = (value: number | null): string => {
+    if (value == null || value <= 0) return "—";
+    if (value < 1) return "< 1 detik";
+    return `${Math.round(value)} detik`;
+  };
+
   return (
     <div className="space-y-4">
-      <section className="flex flex-col gap-4 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-semibold text-zinc-900">
-              Dashboard
-            </h2>
-            <p className="text-xs text-zinc-600">
-              Ringkasan aktivitas chat AI/human. Semua waktu dalam zona
-              Asia/Jakarta (+07).
-            </p>
-          </div>
-          <FilterForm filters={filters} configuredContexts={configuredContexts} />
-        </div>
-        {missingContexts.length > 0 && (
-          <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-            <p className="font-medium">DB belum terkonfigurasi:</p>
-            <ul className="mt-1 list-disc pl-5">
-              {missingContexts.map((ctx) => (
-                <li key={ctx.contextKey}>
-                  {ctx.label} (
-                  <code className="text-[11px]">{ctx.envVar}</code> tidak
-                  di-set)
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </section>
+      <FilterBar filters={filters} configuredContexts={configuredContexts} />
 
       <section className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-4 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-          <h3 className="text-sm font-semibold text-zinc-900">
-            Ringkasan aktivitas
-          </h3>
+        <div className="card space-y-3 p-4">
+          <h2 className="text-sm font-semibold text-[color:var(--color-text)]">
+            Aktivitas
+          </h2>
           <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="rounded-md border border-zinc-100 bg-zinc-50 p-3">
-              <p className="text-xs text-zinc-500">Jumlah sesi</p>
-              <p className="mt-1 text-xl font-semibold text-zinc-900">
-                {activity.totalSessions}
-              </p>
-            </div>
-            <div className="rounded-md border border-zinc-100 bg-zinc-50 p-3">
-              <p className="text-xs text-zinc-500">Total pesan</p>
-              <p className="mt-1 text-xl font-semibold text-zinc-900">
-                {activity.totalMessages}
-              </p>
-            </div>
+            <KpiCard
+              title="Jumlah sesi"
+              value={activity.totalSessions.toLocaleString("id-ID")}
+              subtitle="Dalam rentang tanggal terpilih."
+            />
+            <KpiCard
+              title="Total pesan"
+              value={activity.totalMessages.toLocaleString("id-ID")}
+              subtitle="Human + AI."
+            />
           </div>
         </div>
 
-        <div className="space-y-4 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-          <h3 className="text-sm font-semibold text-zinc-900">
+        <div className="card space-y-3 p-4">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-[color:var(--color-text)]">
             Kecepatan balasan AI
-          </h3>
-          <p className="text-xs text-zinc-600">
-            Perkiraan berapa detik AI membalas chat terakhir dari manusia dalam
-            satu percakapan.
+          </h2>
+          <p className="text-xs text-[color:var(--color-muted)]">
+            Waktu dari pesan terakhir manusia ke balasan AI berikutnya dalam
+            sesi yang sama.
           </p>
           <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
-            <div className="rounded-md border border-zinc-100 bg-zinc-50 p-3">
-              <p className="text-xs text-zinc-500">Biasanya</p>
-              <p className="mt-1 text-xl font-semibold text-zinc-900">
-                {responseTimes.medianSeconds != null
-                  ? `${Math.round(responseTimes.medianSeconds)} detik`
-                  : "-"}
-              </p>
-            </div>
-            <div className="rounded-md border border-zinc-100 bg-zinc-50 p-3">
-              <p className="text-xs text-zinc-500">Yang lambat</p>
-              <p className="mt-1 text-xl font-semibold text-zinc-900">
-                {responseTimes.p95Seconds != null
-                  ? `${Math.round(responseTimes.p95Seconds)} detik`
-                  : "-"}
-              </p>
-            </div>
+            <KpiCard
+              title="Biasanya (median)"
+              value={formatSeconds(responseTimes.medianSeconds)}
+              subtitle={
+                hasResponseSamples
+                  ? undefined
+                  : "Belum ada sampel yang valid di rentang ini."
+              }
+              tone="info"
+              tooltip="Median waktu (detik) antara pesan terakhir manusia dan balasan AI berikutnya, hanya dari pasangan pesan valid."
+            />
+            <KpiCard
+              title="Yang lambat (p95)"
+              value={formatSeconds(responseTimes.p95Seconds)}
+              subtitle={
+                hasResponseSamples
+                  ? undefined
+                  : "Belum ada sampel yang valid di rentang ini."
+              }
+              tone="warning"
+              tooltip="Perkiraan 5% balasan AI paling lambat (persentil 95)."
+            />
           </div>
         </div>
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
-        <div className="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm md:col-span-2">
-          <h3 className="text-sm font-semibold text-zinc-900">
-            Riwayat sesi terbaru
-          </h3>
-          <p className="text-xs text-zinc-600">
-            20 sesi terbaru dalam rentang tanggal terpilih.
-          </p>
-          <div className="mt-2 overflow-x-auto">
-            <table className="min-w-full text-left text-xs">
-              <thead className="border-b border-zinc-200 bg-zinc-50 text-[11px] uppercase tracking-wide text-zinc-500">
-                <tr>
-                  <th className="px-2 py-1">Last activity</th>
-                  <th className="px-2 py-1">Office/Bot</th>
-                  <th className="px-2 py-1">Session ID</th>
-                  <th className="px-2 py-1 text-right">Msgs</th>
-                  <th className="px-2 py-1 text-right">Human</th>
-                  <th className="px-2 py-1 text-right">AI</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentSessions.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-2 py-4 text-center text-xs text-zinc-500"
-                    >
-                      Belum ada sesi untuk filter yang dipilih.
-                    </td>
-                  </tr>
-                )}
-                {recentSessions.map((session) => (
-                  <tr
-                    key={session.id}
-                    className="border-b border-zinc-100 last:border-b-0"
-                  >
-                    <td className="px-2 py-1 text-xs text-zinc-700">
-                      {formatTimestamp(session.lastActivity)}
-                    </td>
-                    <td className="px-2 py-1 text-xs">
-                      <span className="mr-1 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px]">
-                        {session.office}
-                      </span>
-                      <span className="rounded bg-zinc-900 px-1.5 py-0.5 text-[10px] text-white">
-                        {session.bot}
-                      </span>
-                    </td>
-                    <td className="px-2 py-1 text-xs font-mono text-zinc-800">
-                      {session.sessionId}
-                    </td>
-                    <td className="px-2 py-1 text-right text-xs">
-                      {session.messageCount}
-                    </td>
-                    <td className="px-2 py-1 text-right text-xs">
-                      {session.humanCount}
-                    </td>
-                    <td className="px-2 py-1 text-right text-xs">
-                      {session.aiCount}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className="card space-y-3 p-4 md:col-span-2">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h3 className="text-sm font-semibold text-[color:var(--color-text)]">
+                Riwayat sesi terbaru
+              </h3>
+              <p className="text-xs text-[color:var(--color-muted)]">
+                20 sesi terbaru, urut dari{" "}
+                <span className="font-medium">Last activity desc</span>.
+              </p>
+            </div>
           </div>
+          <SessionTable rows={tableRows} />
         </div>
 
-        <div className="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-          <h3 className="text-sm font-semibold text-zinc-900">
+        <div className="card space-y-3 p-4">
+          <h3 className="text-sm font-semibold text-[color:var(--color-text)]">
             Chat belum dijawab AI
           </h3>
-          <p className="text-xs text-zinc-600">
-            Daftar chat di mana pesan terakhir dari manusia belum dijawab AI
-            lebih dari beberapa menit.
+          <p className="text-xs text-[color:var(--color-muted)]">
+            Sesi di mana pesan terakhir adalah manusia dan belum dijawab AI
+            setelah threshold menit konfigurasi.
           </p>
           <div className="mt-2 max-h-72 space-y-2 overflow-y-auto text-xs">
             {pendingSessions.length === 0 && (
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-[color:var(--color-muted)]">
                 Tidak ada sesi pending untuk filter dan threshold saat ini.
               </p>
             )}
             {pendingSessions.map((session) => (
               <div
                 key={session.id}
-                className="rounded border border-zinc-100 bg-zinc-50 px-2 py-1.5"
+                className="surface-muted border border-[var(--color-border)] px-2 py-1.5"
               >
                 <div className="mb-1 flex items-center justify-between">
-                  <span className="text-[10px] text-zinc-500">
+                  <span className="text-[10px] text-[color:var(--color-muted)]">
                     {formatTimestamp(session.lastHumanAt)}
                   </span>
-                  <span className="text-[10px] text-zinc-600">
+                  <span className="text-[10px] text-[color:var(--color-muted)]">
                     {session.office} / {session.bot}
                   </span>
                 </div>
-                <div className="font-mono text-[11px] text-zinc-900">
+                <div className="font-mono text-[11px] text-[color:var(--color-text)]">
                   {session.sessionId}
                 </div>
               </div>
             ))}
           </div>
         </div>
+
+        {missingContexts.length > 0 && (
+          <div className="md:col-span-3">
+            <div className="card border-[color:var(--color-warning)] bg-[color:var(--color-warning)]/5 p-3 text-xs text-[color:var(--color-text)]">
+              <p className="font-medium">DB belum terkonfigurasi:</p>
+              <ul className="mt-1 list-disc pl-5">
+                {missingContexts.map((ctx) => (
+                  <li key={ctx.contextKey}>
+                    {ctx.label} (
+                    <code className="text-[11px]">{ctx.envVar}</code> tidak
+                    di-set)
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
       </section>
 
-      {/* Bagian kata terbanyak dihilangkan sesuai permintaan user */}
+      {/* Bagian kata terbanyak tetap dihilangkan sesuai permintaan sebelumnya */}
     </div>
-  );
-}
-
-type FilterFormProps = {
-  filters: ParsedFilters;
-  configuredContexts: DbContext[];
-};
-
-function FilterForm({ filters, configuredContexts }: FilterFormProps) {
-  const hasAMG = configuredContexts.some((c) => c.office === "AMG");
-  const hasLMP = configuredContexts.some((c) => c.office === "LMP");
-
-  const hasSales = configuredContexts.some((c) => c.bot === "sales");
-  const hasCustomer = configuredContexts.some((c) => c.bot === "customer");
-
-  return (
-    <form method="GET" className="flex flex-wrap items-end gap-2 text-xs">
-      <div className="flex flex-col">
-        <label className="mb-1 text-[11px] font-medium text-zinc-700">
-          Office
-        </label>
-        <select
-          name="office"
-          defaultValue={filters.office}
-          className="rounded border border-zinc-300 bg-white px-2 py-1 text-xs"
-        >
-          <option value="all">All</option>
-          {hasAMG && <option value="AMG">AMG</option>}
-          {hasLMP && <option value="LMP">LMP</option>}
-        </select>
-      </div>
-      <div className="flex flex-col">
-        <label className="mb-1 text-[11px] font-medium text-zinc-700">
-          Bot
-        </label>
-        <select
-          name="bot"
-          defaultValue={filters.bot}
-          className="rounded border border-zinc-300 bg-white px-2 py-1 text-xs"
-        >
-          <option value="all">All</option>
-          {hasSales && <option value="sales">sales</option>}
-          {hasCustomer && <option value="customer">customer</option>}
-        </select>
-      </div>
-      <div className="flex flex-col">
-        <label className="mb-1 text-[11px] font-medium text-zinc-700">
-          Date range
-        </label>
-        <select
-          name="range"
-          defaultValue={filters.preset}
-          className="rounded border border-zinc-300 bg-white px-2 py-1 text-xs"
-        >
-          <option value="today">Today</option>
-          <option value="7d">7d</option>
-          <option value="30d">30d</option>
-          <option value="custom">Custom</option>
-        </select>
-      </div>
-      {filters.preset === "custom" && (
-        <>
-          <div className="flex flex-col">
-            <label className="mb-1 text-[11px] font-medium text-zinc-700">
-              From
-            </label>
-            <input
-              type="date"
-              name="from"
-              defaultValue={filters.from}
-              className="rounded border border-zinc-300 bg-white px-2 py-1 text-xs"
-            />
-          </div>
-          <div className="flex flex-col">
-            <label className="mb-1 text-[11px] font-medium text-zinc-700">
-              To
-            </label>
-            <input
-              type="date"
-              name="to"
-              defaultValue={filters.to}
-              className="rounded border border-zinc-300 bg-white px-2 py-1 text-xs"
-            />
-          </div>
-        </>
-      )}
-      <button
-        type="submit"
-        className="mt-4 rounded bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800"
-      >
-        Terapkan
-      </button>
-    </form>
   );
 }
 
@@ -381,17 +285,17 @@ async function getActivitySummary(
   }
 
   const queries = contexts.map((ctx) =>
-    queryContext<{ session_count: string; message_count: string }>(
-      ctx,
-      `
-        SELECT
-          COUNT(DISTINCT session_id) AS session_count,
-          COUNT(*) AS message_count
-        FROM n8n_chat_histories
-        WHERE created_at >= $1 AND created_at < $2
-      `,
-      [start, end],
-    ),
+      queryContext<{ session_count: string; message_count: string }>(
+        ctx,
+        `
+          SELECT
+            COUNT(DISTINCT session_id) AS session_count,
+            COUNT(*) AS message_count
+          FROM chat_messages
+          WHERE created_at >= $1 AND created_at < $2
+        `,
+        [start, end],
+      ),
   );
 
   const results = await Promise.all(queries);
@@ -419,27 +323,27 @@ async function getRecentSessions(
   }
 
   const perContext = await Promise.all(
-    contexts.map((ctx) =>
-      queryContext<{
-        session_id: string;
-        last_activity: Date;
-        message_count: string;
-        human_count: string;
-        ai_count: string;
-      }>(
-        ctx,
-        `
-          SELECT
-            session_id,
-            MAX(created_at) AS last_activity,
-            COUNT(*) AS message_count,
-            COUNT(*) FILTER (WHERE message->>'type' = 'human') AS human_count,
-            COUNT(*) FILTER (WHERE message->>'type' = 'ai') AS ai_count
-          FROM n8n_chat_histories
-          WHERE created_at >= $1 AND created_at < $2
-          GROUP BY session_id
-          ORDER BY last_activity DESC
-          LIMIT $3
+      contexts.map((ctx) =>
+        queryContext<{
+          session_id: string;
+          last_activity: Date;
+          message_count: string;
+          human_count: string;
+          ai_count: string;
+        }>(
+          ctx,
+          `
+            SELECT
+              session_id,
+              MAX(created_at) AS last_activity,
+              COUNT(*) AS message_count,
+              COUNT(*) FILTER (WHERE role = 'human') AS human_count,
+              COUNT(*) FILTER (WHERE role = 'ai') AS ai_count
+            FROM chat_messages
+            WHERE created_at >= $1 AND created_at < $2
+            GROUP BY session_id
+            ORDER BY last_activity DESC
+            LIMIT $3
         `,
         [start, end, SESSION_PAGE_SIZE],
       ),
@@ -502,10 +406,13 @@ async function getPendingSessions(
           WITH ranked AS (
             SELECT
               session_id,
-              message->>'type' AS type,
+              role AS type,
               created_at,
-              ROW_NUMBER() OVER (PARTITION BY session_id ORDER BY created_at DESC) AS rn
-            FROM n8n_chat_histories
+              ROW_NUMBER() OVER (
+                PARTITION BY session_id
+                ORDER BY created_at DESC, seq DESC
+              ) AS rn
+            FROM chat_messages
             WHERE created_at >= $1 AND created_at < $2
           )
           SELECT
@@ -566,10 +473,16 @@ async function getResponseTimeStats(
           WITH paired AS (
             SELECT
               created_at,
-              message->>'type' AS type,
-              LAG(created_at) OVER (PARTITION BY session_id ORDER BY created_at) AS prev_created_at,
-              LAG(message->>'type') OVER (PARTITION BY session_id ORDER BY created_at) AS prev_type
-            FROM n8n_chat_histories
+              role AS type,
+              LAG(created_at) OVER (
+                PARTITION BY session_id
+                ORDER BY created_at, seq
+              ) AS prev_created_at,
+              LAG(role) OVER (
+                PARTITION BY session_id
+                ORDER BY created_at, seq
+              ) AS prev_type
+            FROM chat_messages
             WHERE created_at >= $1 AND created_at < $2
           ),
           diffs AS (
@@ -633,10 +546,10 @@ async function getTopWords(
         ctx,
         `
           SELECT
-            message->>'content' AS content
-          FROM n8n_chat_histories
+            content
+          FROM chat_messages
           WHERE created_at >= $1 AND created_at < $2
-            AND message->>'type' = 'human'
+            AND role = 'human'
           LIMIT 5000
         `,
         [start, end],
