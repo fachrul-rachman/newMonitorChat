@@ -20,7 +20,10 @@ type SessionListItem = {
   office: string;
   bot: string;
   lastActivity: string;
+  lastSpeaker: "human" | "ai" | "other";
+  lastMessageSnippet: string;
   messageCount: number;
+  isOverdue: boolean;
 };
 
 type MessageView = {
@@ -205,25 +208,27 @@ export default function ChatShell() {
   };
 
   return (
-    <div className="chat-shell flex flex-col">
-      <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-2">
+    <div className="chat-shell flex flex-col bg-[var(--color-bg)]">
+      <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-2">
         <div>
-          <h2 className="text-sm font-semibold text-zinc-900">Chat Viewer</h2>
-          <p className="text-xs text-zinc-600">
+          <h2 className="text-sm font-semibold text-[color:var(--color-text)]">
+            Chat Viewer
+          </h2>
+          <p className="text-xs text-[color:var(--color-muted)]">
             Pilih sesi di kiri untuk melihat isi chat.
           </p>
         </div>
       </div>
       <div className="flex flex-1 min-h-0 flex-col md:flex-row">
         <aside
-          className={`w-full min-h-0 flex-shrink-0 flex-col border-b border-zinc-200 md:w-80 md:border-b-0 md:border-r ${
+          className={`w-full min-h-0 flex-shrink-0 flex-col border-b border-[var(--color-border)] bg-[color:var(--color-surface)] md:w-80 md:border-b-0 md:border-r ${
             showMessagesOnMobile ? "hidden md:flex" : "flex"
           }`}
         >
-          <div className="border-b border-zinc-200 px-3 py-2 text-xs">
+          <div className="border-b border-[var(--color-border)] px-3 py-2 text-xs">
             <div className="mb-2 flex items-center gap-2">
               <select
-                className="rounded border border-zinc-300 bg-white px-2 py-1 text-[11px]"
+                className="rounded-md border border-[var(--color-border)] bg-[color:var(--color-surface)] px-2 py-1 text-[11px]"
                 value={filters.office}
                 onChange={(e) =>
                   handleFilterChange({ office: e.target.value as OfficeFilter })
@@ -234,7 +239,7 @@ export default function ChatShell() {
                 <option value="LMP">LMP</option>
               </select>
               <select
-                className="rounded border border-zinc-300 bg-white px-2 py-1 text-[11px]"
+                className="rounded-md border border-[var(--color-border)] bg-[color:var(--color-surface)] px-2 py-1 text-[11px]"
                 value={filters.bot}
                 onChange={(e) =>
                   handleFilterChange({ bot: e.target.value as BotFilter })
@@ -247,7 +252,7 @@ export default function ChatShell() {
             </div>
             <div className="mb-2 flex items-center gap-2">
               <select
-                className="rounded border border-zinc-300 bg-white px-2 py-1 text-[11px]"
+                className="rounded-md border border-[var(--color-border)] bg-[color:var(--color-surface)] px-2 py-1 text-[11px]"
                 value={filters.preset}
                 onChange={(e) =>
                   handleFilterChange({
@@ -262,17 +267,17 @@ export default function ChatShell() {
               </select>
               {filters.preset === "custom" && (
                 <>
-                  <input
-                    type="date"
-                    className="flex-1 rounded border border-zinc-300 bg-white px-2 py-1 text-[11px]"
+                    <input
+                      type="date"
+                      className="flex-1 rounded-md border border-[var(--color-border)] bg-[color:var(--color-surface)] px-2 py-1 text-[11px]"
                     value={filters.from ?? ""}
                     onChange={(e) =>
                       handleFilterChange({ from: e.target.value })
                     }
                   />
-                  <input
-                    type="date"
-                    className="flex-1 rounded border border-zinc-300 bg-white px-2 py-1 text-[11px]"
+                    <input
+                      type="date"
+                      className="flex-1 rounded-md border border-[var(--color-border)] bg-[color:var(--color-surface)] px-2 py-1 text-[11px]"
                     value={filters.to ?? ""}
                     onChange={(e) =>
                       handleFilterChange({ to: e.target.value })
@@ -283,7 +288,7 @@ export default function ChatShell() {
             </div>
             <div className="flex items-center gap-2">
               <input
-                className="w-full rounded border border-zinc-300 px-2 py-1 text-[11px]"
+                className="w-full rounded-md border border-[var(--color-border)] bg-[color:var(--color-surface)] px-2 py-1 text-[11px]"
                 placeholder="Cari session_id..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -293,68 +298,63 @@ export default function ChatShell() {
 
           <div className="flex-1 overflow-y-auto text-xs">
             {state.loadingSessions && (
-              <div className="px-3 py-3 text-zinc-500">Memuat sesi...</div>
+              <div className="space-y-2 px-3 py-3">
+                <div className="h-4 w-28 rounded bg-[color:var(--color-surface-2)]" />
+                <div className="space-y-2">
+                  <div className="h-10 rounded bg-[color:var(--color-surface-2)]" />
+                  <div className="h-10 rounded bg-[color:var(--color-surface-2)]" />
+                  <div className="h-10 rounded bg-[color:var(--color-surface-2)]" />
+                </div>
+              </div>
             )}
             {!state.loadingSessions &&
               state.sessions.length === 0 &&
               !state.sessionsError && (
-                <div className="px-3 py-3 text-zinc-500">
-                  Tidak ada sesi untuk filter saat ini. Coba ubah rentang tanggal
-                  menjadi 30 hari atau pastikan data di tabel{" "}
-                  <code>n8n_chat_histories</code> berada dalam rentang tersebut.
+                <div className="px-3 py-3 text-[color:var(--color-muted)]">
+                  <p className="mb-1 text-xs font-medium">
+                    Tidak ada sesi untuk filter saat ini.
+                  </p>
+                  <p className="text-[11px]">
+                    Coba perlebar rentang tanggal (misalnya 30 hari) atau reset
+                    filter.
+                  </p>
                 </div>
               )}
             {!state.loadingSessions && state.sessionsError && (
-              <div className="px-3 py-3 text-xs text-red-600">
-                {state.sessionsError}
+              <div className="px-3 py-3 text-xs text-[color:var(--color-danger)]">
+                <p className="mb-1 font-medium">Gagal memuat daftar sesi.</p>
+                <p className="mb-2 text-[11px]">{state.sessionsError}</p>
+                <button
+                  type="button"
+                  onClick={() => setPage((prev) => prev)}
+                  className="rounded-md border border-[var(--color-border)] bg-[color:var(--color-surface)] px-2 py-1 text-[11px] font-medium text-[color:var(--color-text)] hover:bg-[color:var(--color-surface-2)]"
+                >
+                  Coba lagi
+                </button>
               </div>
             )}
             {state.sessions.map((session) => {
               const isActive = state.selectedCompositeId === session.id;
               return (
-                <button
+                <SessionListItemRow
                   key={session.id}
-                  type="button"
-                  onClick={() => handleSelectSession(session.id)}
-                  className={`block w-full border-b border-zinc-100 px-3 py-2 text-left text-xs ${
-                    isActive ? "bg-zinc-100" : "hover:bg-zinc-50"
-                  }`}
-                >
-                  <div className="mb-1 flex items-center justify-between">
-                    <span className="font-medium text-zinc-900">
-                      {session.sessionId}
-                    </span>
-                    <span className="text-[10px] text-zinc-500">
-                      {session.lastActivity}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-[10px] text-zinc-600">
-                      <span className="mr-1 rounded bg-zinc-100 px-1.5 py-0.5">
-                        {session.office}
-                      </span>
-                      <span className="rounded bg-zinc-900 px-1.5 py-0.5 text-white">
-                        {session.bot}
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-zinc-500">
-                      {session.messageCount} pesan
-                    </span>
-                  </div>
-                </button>
+                  session={session}
+                  active={isActive}
+                  onSelect={() => handleSelectSession(session.id)}
+                />
               );
             })}
           </div>
         </aside>
 
         <section
-          className={`flex-1 min-h-0 border-t border-zinc-200 bg-zinc-50 md:border-l md:border-t-0 ${
+          className={`flex-1 min-h-0 border-t border-[var(--color-border)] bg-[color:var(--color-surface-2)] md:border-l md:border-t-0 ${
             showMessagesOnMobile ? "flex" : "hidden"
           } md:flex`}
         >
           {!state.selectedCompositeId ? (
-            <div className="flex h-full flex-col items-center justify-center px-4 text-center text-xs text-zinc-500">
-              <p className="mb-2 font-medium text-zinc-700">
+            <div className="flex h-full flex-col items-center justify-center px-4 text-center text-xs text-[color:var(--color-muted)]">
+              <p className="mb-2 font-medium text-[color:var(--color-text)]">
                 Pilih sesi dari daftar kiri untuk melihat detail chat.
               </p>
               <p>
@@ -382,6 +382,7 @@ type ChatMessagesProps = {
 function ChatMessages({ state, onBack }: ChatMessagesProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [stickToBottom, setStickToBottom] = useState(true);
+  const [activeMessage, setActiveMessage] = useState<MessageView | null>(null);
 
   useEffect(() => {
     if (!stickToBottom) {
@@ -399,91 +400,101 @@ function ChatMessages({ state, onBack }: ChatMessagesProps) {
     setStickToBottom(distanceFromBottom < 80);
   };
 
+  const selectedSessionId = state.selectedCompositeId ?? "";
+  const [contextKey, rawSessionId] = selectedSessionId.split(":", 2);
+  const headerSessionId = rawSessionId ?? selectedSessionId;
+
+  const computedStatus = (() => {
+    if (state.messages.length === 0) return "Tidak ada pesan";
+    const last = state.messages[state.messages.length - 1];
+    if (last.role === "human") return "Open";
+    if (last.role === "ai") return "Closed";
+    return "Needs attention";
+  })();
+
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col text-xs">
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto bg-gradient-to-b from-zinc-50 to-zinc-100 text-xs"
+        className="relative flex-1 overflow-y-auto bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.06),_transparent)] text-xs"
       >
-        <div className="sticky top-0 z-10 border-b border-zinc-200 bg-white/95 px-4 py-2 text-xs backdrop-blur">
-          <div className="flex items-center justify-between">
-            <div>
+        <div className="sticky top-0 z-10 border-b border-[var(--color-border)] bg-[color:var(--color-surface)]/95 px-4 py-2 text-xs backdrop-blur">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
               {onBack && (
                 <button
                   type="button"
                   onClick={onBack}
-                  className="mb-1 mr-2 rounded bg-zinc-900 px-2 py-1 text-[11px] font-medium text-white md:hidden"
+                  className="mb-1 mr-2 inline-flex items-center rounded-md bg-[color:var(--color-surface-2)] px-2 py-1 text-[11px] font-medium text-[color:var(--color-text)] md:hidden"
                 >
                   Kembali
                 </button>
               )}
-              <div className="text-[11px] uppercase tracking-wide text-zinc-500">
+              <div className="text-[11px] uppercase tracking-wide text-[color:var(--color-muted)]">
                 Session
               </div>
-              <div className="font-mono text-sm text-zinc-900">
-                {state.selectedCompositeId}
+              <div className="flex flex-wrap items-center gap-1 text-[11px]">
+                {contextKey && (
+                  <span className="rounded-full bg-[color:var(--color-surface-2)] px-1.5 py-0.5 font-medium text-[color:var(--color-text)]">
+                    {contextKey}
+                  </span>
+                )}
+                <span className="font-mono text-sm text-[color:var(--color-text)]">
+                  {headerSessionId}
+                </span>
               </div>
             </div>
-            <div className="text-[11px] text-zinc-500">
-              {state.loadingMessages
-                ? "Memuat pesan..."
-                : `Total pesan: ${state.messages.length}`}
+            <div className="flex flex-col items-end gap-1 text-[11px] text-[color:var(--color-muted)]">
+              <div>
+                {state.loadingMessages
+                  ? "Memuat pesan..."
+                  : `Total pesan: ${state.messages.length}`}
+              </div>
+              <div className="inline-flex items-center gap-1 rounded-full bg-[color:var(--color-surface-2)] px-2 py-0.5 text-[10px] text-[color:var(--color-text)]">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--color-info)]" />
+                {computedStatus}
+              </div>
             </div>
           </div>
         </div>
         <div className="space-y-2 px-3 py-3">
-        {state.messages.length === 0 && !state.loadingMessages && (
-          <div className="mt-4 text-center text-xs text-zinc-500">
-            Tidak ada pesan untuk sesi ini.
+          {state.messages.length === 0 && !state.loadingMessages && (
+            <div className="mt-4 text-center text-xs text-[color:var(--color-muted)]">
+              Tidak ada pesan untuk sesi ini.
+            </div>
+          )}
+          {state.messages.map((message) => (
+            <ChatMessage
+              key={message.id}
+              message={message}
+              onOpenDetails={() => setActiveMessage(message)}
+            />
+          ))}
+        </div>
+
+        {!stickToBottom && (
+          <div className="pointer-events-none fixed bottom-4 right-4 z-20 flex justify-end md:right-8">
+            <button
+              type="button"
+              onClick={() => {
+                const el = containerRef.current;
+                if (!el) return;
+                el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+              }}
+              className="pointer-events-auto inline-flex items-center gap-1 rounded-full bg-[color:var(--color-surface)] px-3 py-1.5 text-[11px] font-medium text-[color:var(--color-text)] shadow-md"
+            >
+              <span className="inline-block h-3 w-3 rotate-90 border-b border-r border-[color:var(--color-text)]" />
+              Jump to latest
+            </button>
           </div>
         )}
-        {state.messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex w-full ${
-              message.role === "human"
-                ? "justify-start"
-                : message.role === "ai"
-                  ? "justify-end"
-                  : "justify-center"
-            }`}
-          >
-            <div
-              className={`w-full max-w-full rounded-lg px-3 py-2 shadow-sm md:w-auto md:max-w-[75%] ${
-                message.role === "human"
-                  ? "bg-white text-zinc-900"
-                  : message.role === "ai"
-                    ? "bg-emerald-500 text-white"
-                    : "bg-zinc-200 text-zinc-800"
-              }`}
-            >
-              <div className="mb-1 text-[11px] font-medium">
-                {message.role === "human"
-                  ? "Human"
-                  : message.role === "ai"
-                    ? "AI"
-                    : "Other"}
-              </div>
-              <div className="chat-message-body whitespace-pre-wrap break-words text-xs">
-                {renderContent(message.content)}
-              </div>
-              <div className="mt-1 flex items-center justify-between text-[10px] opacity-80">
-                <span>{message.createdAt}</span>
-                <details className="ml-2">
-                  <summary className="cursor-pointer select-none">
-                    Raw JSON
-                  </summary>
-                  <pre className="mt-1 max-h-40 overflow-auto rounded bg-black/80 p-2 text-[9px] text-zinc-100">
-                    {JSON.stringify(message.raw, null, 2)}
-                  </pre>
-                </details>
-              </div>
-            </div>
-          </div>
-        ))}
-        </div>
       </div>
+
+      <MessageDetailsDrawer
+        message={activeMessage}
+        onClose={() => setActiveMessage(null)}
+      />
     </div>
   );
 }
@@ -511,4 +522,243 @@ function renderContent(text: string): ReactNode {
   });
 
   return parts;
+}
+
+type SessionListItemRowProps = {
+  session: SessionListItem;
+  active: boolean;
+  onSelect: () => void;
+};
+
+function SessionListItemRow({
+  session,
+  active,
+  onSelect,
+}: SessionListItemRowProps) {
+  const statusLabel = session.isOverdue ? "Overdue" : "Recent";
+  const statusColor = session.isOverdue
+    ? "bg-[color:var(--color-danger)]"
+    : "bg-[color:var(--color-success)]";
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`block w-full border-b border-[var(--color-border)] px-3 py-2 text-left text-xs transition-colors ${
+        active
+          ? "bg-[color:var(--color-surface-2)]"
+          : "hover:bg-[color:var(--color-surface-2)]"
+      }`}
+    >
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <span className="truncate font-mono text-[11px] text-[color:var(--color-text)]">
+          {session.sessionId}
+        </span>
+        <span className="text-[10px] text-[color:var(--color-muted)]">
+          {session.lastActivity}
+        </span>
+      </div>
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1 text-[10px] text-[color:var(--color-muted)]">
+          <span className="rounded-full bg-[color:var(--color-surface-2)] px-1.5 py-0.5">
+            {session.office}
+          </span>
+          <span className="rounded-full bg-[color:var(--color-primary)] px-1.5 py-0.5 text-[color:var(--color-primary-contrast)]">
+            {session.bot}
+          </span>
+          <span className="rounded-full bg-[color:var(--color-surface-2)] px-1.5 py-0.5">
+            {session.lastSpeaker === "human" ? "Human" : "AI"}
+          </span>
+        </div>
+        <span className="inline-flex items-center gap-1 text-[10px] text-[color:var(--color-muted)]">
+          <span
+            className={`inline-block h-1.5 w-1.5 rounded-full ${statusColor}`}
+          />
+          {statusLabel}
+        </span>
+      </div>
+      <div className="flex items-center justify-between gap-2 text-[10px] text-[color:var(--color-muted)]">
+        <span className="line-clamp-1 flex-1">
+          {session.lastMessageSnippet || "—"}
+        </span>
+        <span>{session.messageCount} pesan</span>
+      </div>
+    </button>
+  );
+}
+
+type ChatMessageProps = {
+  message: MessageView;
+  onOpenDetails: () => void;
+};
+
+function ChatMessage({ message, onOpenDetails }: ChatMessageProps) {
+  const isHuman = message.role === "human";
+  const isAi = message.role === "ai";
+
+  const alignment = isHuman
+    ? "justify-start"
+    : isAi
+      ? "justify-end"
+      : "justify-center";
+
+  return (
+    <div className={`flex w-full ${alignment}`}>
+      <div className="max-w-full rounded-lg bg-[color:var(--color-surface)] px-3 py-2 text-xs shadow-sm md:max-w-[72%]">
+        <div className="mb-1 flex items-center justify-between gap-2 text-[11px]">
+          <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--color-surface-2)] px-2 py-0.5 font-medium text-[color:var(--color-text)]">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--color-info)]" />
+            {isHuman ? "Human" : isAi ? "AI" : "Other"}
+          </span>
+          <span className="text-[10px] text-[color:var(--color-muted)]">
+            {message.createdAt}
+          </span>
+        </div>
+        <div className="chat-message-body text-xs text-[color:var(--color-text)]">
+          {renderContent(message.content)}
+        </div>
+        <div className="mt-1 flex items-center justify-end gap-2 text-[10px] text-[color:var(--color-muted)]">
+          <MessageActionsMenu message={message} onOpenDetails={onOpenDetails} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type MessageActionsMenuProps = {
+  message: MessageView;
+  onOpenDetails: () => void;
+};
+
+function MessageActionsMenu({
+  message,
+  onOpenDetails,
+}: MessageActionsMenuProps) {
+  const [open, setOpen] = useState(false);
+
+  const close = () => setOpen(false);
+
+  const copyText = async () => {
+    try {
+      await navigator.clipboard.writeText(message.content);
+    } catch {
+      // ignore
+    }
+  };
+
+  const copyJson = async () => {
+    try {
+      await navigator.clipboard.writeText(
+        JSON.stringify(message.raw ?? {}, null, 2),
+      );
+    } catch {
+      // ignore
+    }
+  };
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--color-surface-2)] text-[color:var(--color-text)]"
+        aria-label="Buka menu aksi pesan"
+      >
+        ⋯
+      </button>
+      {open && (
+        <div className="absolute right-0 z-20 mt-1 w-40 rounded-md border border-[var(--color-border)] bg-[color:var(--color-surface)] text-[11px] shadow-md">
+          <button
+            type="button"
+            className="block w-full px-3 py-1.5 text-left hover:bg-[color:var(--color-surface-2)]"
+            onClick={() => {
+              copyText();
+              close();
+            }}
+          >
+            Copy text
+          </button>
+          <button
+            type="button"
+            className="block w-full px-3 py-1.5 text-left hover:bg-[color:var(--color-surface-2)]"
+            onClick={() => {
+              copyJson();
+              close();
+            }}
+          >
+            Copy JSON
+          </button>
+          <button
+            type="button"
+            className="block w-full px-3 py-1.5 text-left hover:bg-[color:var(--color-surface-2)]"
+            onClick={() => {
+              onOpenDetails();
+              close();
+            }}
+          >
+            View details
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+type MessageDetailsDrawerProps = {
+  message: MessageView | null;
+  onClose: () => void;
+};
+
+function MessageDetailsDrawer({
+  message,
+  onClose,
+}: MessageDetailsDrawerProps) {
+  if (!message) return null;
+
+  return (
+    <div className="fixed inset-y-0 right-0 z-30 flex w-full max-w-md flex-col border-l border-[var(--color-border)] bg-[color:var(--color-surface)] text-xs shadow-md">
+      <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-2">
+        <div>
+          <h3 className="text-sm font-semibold text-[color:var(--color-text)]">
+            Message details
+          </h3>
+          <p className="text-[11px] text-[color:var(--color-muted)]">
+            Raw JSON dan metadata untuk pesan ini.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-md bg-[color:var(--color-surface-2)] px-2 py-1 text-[11px] font-medium text-[color:var(--color-text)]"
+        >
+          Tutup
+        </button>
+      </div>
+      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
+        <div>
+          <div className="mb-1 text-[11px] font-medium text-[color:var(--color-muted)]">
+            Ringkasan
+          </div>
+          <div className="space-y-1 rounded-md bg-[color:var(--color-surface-2)] px-3 py-2 text-[11px] text-[color:var(--color-text)]">
+            <div>
+              <span className="font-medium">Role: </span>
+              {message.role}
+            </div>
+            <div>
+              <span className="font-medium">Timestamp: </span>
+              {message.createdAt}
+            </div>
+          </div>
+        </div>
+        <div>
+          <div className="mb-1 text-[11px] font-medium text-[color:var(--color-muted)]">
+            Raw JSON
+          </div>
+          <pre className="max-h-80 overflow-auto rounded-md bg-[color:var(--color-surface-2)] p-2 text-[10px] text-[color:var(--color-text)]">
+            {JSON.stringify(message.raw ?? {}, null, 2)}
+          </pre>
+        </div>
+      </div>
+    </div>
+  );
 }

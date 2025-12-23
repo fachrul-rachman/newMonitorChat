@@ -17,28 +17,28 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const configured = isAuthConfigured();
 
   return (
-    <div className="flex min-h-[70vh] items-center justify-center">
-      <div className="w-full max-w-md rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-2 text-xl font-semibold text-zinc-900">
+    <div className="flex min-h-[70vh] items-center justify-center bg-[var(--color-bg)] px-4 py-8">
+      <div className="w-full max-w-md rounded-lg border border-[var(--color-border)] bg-[color:var(--color-surface)] p-6 shadow-sm">
+        <h2 className="mb-2 text-xl font-semibold text-[color:var(--color-text)]">
           Monitoring Chat Login
         </h2>
-        <p className="mb-4 text-sm text-zinc-600">
+        <p className="mb-4 text-sm text-[color:var(--color-muted)]">
           Hanya untuk penggunaan internal tim.
         </p>
         {!configured && (
-          <div className="mb-4 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <div className="mb-4 rounded border border-[color:var(--color-warning)] bg-[color:var(--color-warning)]/10 px-3 py-2 text-sm text-[color:var(--color-text)]">
             Konfigurasi AUTH belum lengkap. Set{" "}
             <code>AUTH_USERNAME</code>, <code>AUTH_PASSWORD</code>, dan{" "}
             <code>AUTH_SESSION_SECRET</code> di environment.
           </div>
         )}
         {error === "1" && (
-          <div className="mb-4 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-900">
+          <div className="mb-4 rounded border border-[color:var(--color-danger)] bg-[color:var(--color-danger)]/10 px-3 py-2 text-sm text-[color:var(--color-text)]">
             Login gagal. Username atau password salah.
           </div>
         )}
         {error === "config" && (
-          <div className="mb-4 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-900">
+          <div className="mb-4 rounded border border-[color:var(--color-danger)] bg-[color:var(--color-danger)]/10 px-3 py-2 text-sm text-[color:var(--color-text)]">
             Login tidak dapat diproses karena konfigurasi AUTH belum lengkap.
           </div>
         )}
@@ -47,7 +47,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <div className="space-y-1 text-sm">
             <label
               htmlFor="username"
-              className="block text-xs font-medium text-zinc-700"
+              className="block text-xs font-medium text-[color:var(--color-muted)]"
             >
               Username
             </label>
@@ -56,14 +56,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               name="username"
               type="text"
               autoComplete="username"
-              className="block w-full rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900"
+              className="block w-full rounded-md border border-[var(--color-border)] bg-[color:var(--color-surface)] px-3 py-2 text-sm outline-none"
               required
             />
           </div>
           <div className="space-y-1 text-sm">
             <label
               htmlFor="password"
-              className="block text-xs font-medium text-zinc-700"
+              className="block text-xs font-medium text-[color:var(--color-muted)]"
             >
               Password
             </label>
@@ -72,20 +72,23 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               name="password"
               type="password"
               autoComplete="current-password"
-              className="block w-full rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900"
+              className="block w-full rounded-md border border-[var(--color-border)] bg-[color:var(--color-surface)] px-3 py-2 text-sm outline-none"
               required
             />
           </div>
           <button
             type="submit"
-            className="flex w-full items-center justify-center rounded-md bg-zinc-900 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60"
+            className="flex w-full items-center justify-center rounded-md bg-[color:var(--color-primary)] py-2 text-sm font-medium text-[color:var(--color-primary-contrast)] hover:bg-[color:var(--color-primary)]/90 disabled:opacity-60"
           >
             Login
           </button>
         </form>
-        <p className="mt-4 text-xs text-zinc-500">
+        <p className="mt-4 text-xs text-[color:var(--color-muted)]">
           Jika lupa credential, hubungi admin sistem.{" "}
-          <Link href="/" className="underline">
+          <Link
+            href="/"
+            className="underline decoration-[color:var(--color-primary)] decoration-1 underline-offset-2"
+          >
             Kembali ke halaman utama
           </Link>
           .
