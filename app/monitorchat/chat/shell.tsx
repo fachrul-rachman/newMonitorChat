@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
@@ -675,7 +675,7 @@ function MessageActionsMenu({
         className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--color-surface-2)] text-[color:var(--color-text)]"
         aria-label="Buka menu aksi pesan"
       >
-        �<_
+        ƒ<_
       </button>
       {open && (
         <div className="absolute right-0 z-20 mt-1 w-40 rounded-md border border-[var(--color-border)] bg-[color:var(--color-surface)] text-[11px] shadow-md">
@@ -773,3 +773,4 @@ function MessageDetailsDrawer({
     </div>
   );
 }
+
