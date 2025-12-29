@@ -489,7 +489,6 @@ function ChatMessages({ state, onBack }: ChatMessagesProps) {
             </button>
           </div>
         )}
-<<<<<<< HEAD
       </div>
 
       <MessageDetailsDrawer
@@ -630,8 +629,6 @@ function ChatMessage({ message, onOpenDetails }: ChatMessageProps) {
         <div className="mt-1 flex items-center justify-end gap-2 text-[10px] text-[color:var(--color-muted)]">
           <MessageActionsMenu message={message} onOpenDetails={onOpenDetails} />
         </div>
-=======
->>>>>>> 8a986817d8e5d34fae049a3a471ef24e6dd7fe07
       </div>
 
       <MessageDetailsDrawer
