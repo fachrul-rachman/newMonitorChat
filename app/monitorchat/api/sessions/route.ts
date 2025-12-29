@@ -92,6 +92,7 @@ async function getSessionList(
           WITH base AS (
             SELECT
               session_id,
+<<<<<<< HEAD
               role AS type,
               content,
               created_at,
@@ -100,6 +101,13 @@ async function getSessionList(
                 ORDER BY created_at DESC, seq DESC
               ) AS rn
             FROM chat_messages
+=======
+              message->>'type' AS type,
+              message->>'content' AS content,
+              created_at,
+              ROW_NUMBER() OVER (PARTITION BY session_id ORDER BY created_at DESC) AS rn
+            FROM n8n_chat_histories
+>>>>>>> 8a986817d8e5d34fae049a3a471ef24e6dd7fe07
             WHERE created_at >= $1 AND created_at < $2
           ),
           aggregated AS (
@@ -177,3 +185,4 @@ async function getSessionList(
 
   return filtered.slice(0, limit);
 }
+

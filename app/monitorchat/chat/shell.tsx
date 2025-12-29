@@ -489,6 +489,7 @@ function ChatMessages({ state, onBack }: ChatMessagesProps) {
             </button>
           </div>
         )}
+<<<<<<< HEAD
       </div>
 
       <MessageDetailsDrawer
@@ -530,6 +531,252 @@ function renderContent(text: string): ReactNode {
 
   return renderedLines.flatMap((node, index) =>
     index === 0 ? [node] : [<br key={`br-${index}`} />, node],
+  );
+}
+
+type SessionListItemRowProps = {
+  session: SessionListItem;
+  active: boolean;
+  onSelect: () => void;
+};
+
+function SessionListItemRow({
+  session,
+  active,
+  onSelect,
+}: SessionListItemRowProps) {
+  const statusLabel = session.isOverdue ? "Overdue" : "Recent";
+  const statusColor = session.isOverdue
+    ? "bg-[color:var(--color-danger)]"
+    : "bg-[color:var(--color-success)]";
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`block w-full border-b border-[var(--color-border)] px-3 py-2 text-left text-xs transition-colors ${
+        active
+          ? "bg-[color:var(--color-surface-2)]"
+          : "hover:bg-[color:var(--color-surface-2)]"
+      }`}
+    >
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <span className="truncate font-mono text-[11px] text-[color:var(--color-text)]">
+          {session.sessionId}
+        </span>
+        <span className="text-[10px] text-[color:var(--color-muted)]">
+          {session.lastActivity}
+        </span>
+      </div>
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1 text-[10px] text-[color:var(--color-muted)]">
+          <span className="rounded-full bg-[color:var(--color-surface-2)] px-1.5 py-0.5">
+            {session.office}
+          </span>
+          <span className="rounded-full bg-[color:var(--color-primary)] px-1.5 py-0.5 text-[color:var(--color-primary-contrast)]">
+            {session.bot}
+          </span>
+          <span className="rounded-full bg-[color:var(--color-surface-2)] px-1.5 py-0.5">
+            {session.lastSpeaker === "human" ? "Human" : "AI"}
+          </span>
+        </div>
+        <span className="inline-flex items-center gap-1 text-[10px] text-[color:var(--color-muted)]">
+          <span
+            className={`inline-block h-1.5 w-1.5 rounded-full ${statusColor}`}
+          />
+          {statusLabel}
+        </span>
+      </div>
+      <div className="flex items-center justify-between gap-2 text-[10px] text-[color:var(--color-muted)]">
+        <span className="line-clamp-1 flex-1">
+          {session.lastMessageSnippet || "—"}
+        </span>
+        <span>{session.messageCount} pesan</span>
+      </div>
+    </button>
+  );
+}
+
+type ChatMessageProps = {
+  message: MessageView;
+  onOpenDetails: () => void;
+};
+
+function ChatMessage({ message, onOpenDetails }: ChatMessageProps) {
+  const isHuman = message.role === "human";
+  const isAi = message.role === "ai";
+
+  const alignment = isHuman
+    ? "justify-start"
+    : isAi
+      ? "justify-end"
+      : "justify-center";
+
+  return (
+    <div className={`flex w-full ${alignment}`}>
+      <div className="max-w-full rounded-lg bg-[color:var(--color-surface)] px-3 py-2 text-xs shadow-sm md:max-w-[72%]">
+        <div className="mb-1 flex items-center justify-between gap-2 text-[11px]">
+          <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--color-surface-2)] px-2 py-0.5 font-medium text-[color:var(--color-text)]">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--color-info)]" />
+            {isHuman ? "Human" : isAi ? "AI" : "Other"}
+          </span>
+          <span className="text-[10px] text-[color:var(--color-muted)]">
+            {message.createdAt}
+          </span>
+        </div>
+        <div className="chat-message-body text-xs text-[color:var(--color-text)]">
+          {renderContent(message.content)}
+        </div>
+        <div className="mt-1 flex items-center justify-end gap-2 text-[10px] text-[color:var(--color-muted)]">
+          <MessageActionsMenu message={message} onOpenDetails={onOpenDetails} />
+        </div>
+=======
+>>>>>>> 8a986817d8e5d34fae049a3a471ef24e6dd7fe07
+      </div>
+
+      <MessageDetailsDrawer
+        message={activeMessage}
+        onClose={() => setActiveMessage(null)}
+      />
+    </div>
+  );
+}
+
+type MessageActionsMenuProps = {
+  message: MessageView;
+  onOpenDetails: () => void;
+};
+
+function MessageActionsMenu({
+  message,
+  onOpenDetails,
+}: MessageActionsMenuProps) {
+  const [open, setOpen] = useState(false);
+
+  const close = () => setOpen(false);
+
+  const copyText = async () => {
+    try {
+      await navigator.clipboard.writeText(message.content);
+    } catch {
+      // ignore
+    }
+  };
+
+  const copyJson = async () => {
+    try {
+      await navigator.clipboard.writeText(
+        JSON.stringify(message.raw ?? {}, null, 2),
+      );
+    } catch {
+      // ignore
+    }
+  };
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--color-surface-2)] text-[color:var(--color-text)]"
+        aria-label="Buka menu aksi pesan"
+      >
+        ⋯
+      </button>
+      {open && (
+        <div className="absolute right-0 z-20 mt-1 w-40 rounded-md border border-[var(--color-border)] bg-[color:var(--color-surface)] text-[11px] shadow-md">
+          <button
+            type="button"
+            className="block w-full px-3 py-1.5 text-left hover:bg-[color:var(--color-surface-2)]"
+            onClick={() => {
+              copyText();
+              close();
+            }}
+          >
+            Copy text
+          </button>
+          <button
+            type="button"
+            className="block w-full px-3 py-1.5 text-left hover:bg-[color:var(--color-surface-2)]"
+            onClick={() => {
+              copyJson();
+              close();
+            }}
+          >
+            Copy JSON
+          </button>
+          <button
+            type="button"
+            className="block w-full px-3 py-1.5 text-left hover:bg-[color:var(--color-surface-2)]"
+            onClick={() => {
+              onOpenDetails();
+              close();
+            }}
+          >
+            View details
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+type MessageDetailsDrawerProps = {
+  message: MessageView | null;
+  onClose: () => void;
+};
+
+function MessageDetailsDrawer({
+  message,
+  onClose,
+}: MessageDetailsDrawerProps) {
+  if (!message) return null;
+
+  return (
+    <div className="fixed inset-y-0 right-0 z-30 flex w-full max-w-md flex-col border-l border-[var(--color-border)] bg-[color:var(--color-surface)] text-xs shadow-md">
+      <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-2">
+        <div>
+          <h3 className="text-sm font-semibold text-[color:var(--color-text)]">
+            Message details
+          </h3>
+          <p className="text-[11px] text-[color:var(--color-muted)]">
+            Raw JSON dan metadata untuk pesan ini.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-md bg-[color:var(--color-surface-2)] px-2 py-1 text-[11px] font-medium text-[color:var(--color-text)]"
+        >
+          Tutup
+        </button>
+      </div>
+      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
+        <div>
+          <div className="mb-1 text-[11px] font-medium text-[color:var(--color-muted)]">
+            Ringkasan
+          </div>
+          <div className="space-y-1 rounded-md bg-[color:var(--color-surface-2)] px-3 py-2 text-[11px] text-[color:var(--color-text)]">
+            <div>
+              <span className="font-medium">Role: </span>
+              {message.role}
+            </div>
+            <div>
+              <span className="font-medium">Timestamp: </span>
+              {message.createdAt}
+            </div>
+          </div>
+        </div>
+        <div>
+          <div className="mb-1 text-[11px] font-medium text-[color:var(--color-muted)]">
+            Raw JSON
+          </div>
+          <pre className="max-h-80 overflow-auto rounded-md bg-[color:var(--color-surface-2)] p-2 text-[10px] text-[color:var(--color-text)]">
+            {JSON.stringify(message.raw ?? {}, null, 2)}
+          </pre>
+        </div>
+      </div>
+    </div>
   );
 }
 
