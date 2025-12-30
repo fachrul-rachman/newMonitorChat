@@ -224,7 +224,7 @@ export default function ChatShell() {
           className={`w-full min-h-0 flex-shrink-0 flex-col border-b border-[var(--color-border)] bg-[color:var(--color-surface)] md:w-80 md:border-b-0 md:border-r ${
             showMessagesOnMobile ? "hidden md:flex" : "flex"
           }`}
-        >
+      >
           <div className="border-b border-[var(--color-border)] px-3 py-2 text-xs">
             <div className="mb-2 flex items-center gap-2">
               <select
@@ -233,7 +233,7 @@ export default function ChatShell() {
                 onChange={(e) =>
                   handleFilterChange({ office: e.target.value as OfficeFilter })
                 }
-              >
+      >
                 <option value="all">Office: All</option>
                 <option value="AMG">AMG</option>
                 <option value="LMP">LMP</option>
@@ -244,7 +244,7 @@ export default function ChatShell() {
                 onChange={(e) =>
                   handleFilterChange({ bot: e.target.value as BotFilter })
                 }
-              >
+      >
                 <option value="all">Bot: All</option>
                 <option value="sales">sales</option>
                 <option value="customer">customer</option>
@@ -259,7 +259,7 @@ export default function ChatShell() {
                     preset: e.target.value as DateRangePreset,
                   })
                 }
-              >
+      >
                 <option value="today">Today</option>
                 <option value="7d">7d</option>
                 <option value="30d">30d</option>
@@ -328,7 +328,7 @@ export default function ChatShell() {
                   type="button"
                   onClick={() => setPage((prev) => prev)}
                   className="rounded-md border border-[var(--color-border)] bg-[color:var(--color-surface)] px-2 py-1 text-[11px] font-medium text-[color:var(--color-text)] hover:bg-[color:var(--color-surface-2)]"
-                >
+      >
                   Coba lagi
                 </button>
               </div>
@@ -351,7 +351,7 @@ export default function ChatShell() {
           className={`flex-1 min-h-0 border-t border-[var(--color-border)] bg-[color:var(--color-surface-2)] md:border-l md:border-t-0 ${
             showMessagesOnMobile ? "flex" : "hidden"
           } md:flex`}
-        >
+      >
           {!state.selectedCompositeId ? (
             <div className="flex h-full flex-col items-center justify-center px-4 text-center text-xs text-[color:var(--color-muted)]">
               <p className="mb-2 font-medium text-[color:var(--color-text)]">
@@ -427,7 +427,7 @@ function ChatMessages({ state, onBack }: ChatMessagesProps) {
                   type="button"
                   onClick={onBack}
                   className="mb-1 mr-2 inline-flex items-center rounded-md bg-[color:var(--color-surface-2)] px-2 py-1 text-[11px] font-medium text-[color:var(--color-text)] md:hidden"
-                >
+      >
                   Kembali
                 </button>
               )}
@@ -483,7 +483,7 @@ function ChatMessages({ state, onBack }: ChatMessagesProps) {
                 el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
               }}
               className="pointer-events-auto inline-flex items-center gap-1 rounded-full bg-[color:var(--color-surface)] px-3 py-1.5 text-[11px] font-medium text-[color:var(--color-text)] shadow-md"
-            >
+      >
               <span className="inline-block h-3 w-3 rotate-90 border-b border-r border-[color:var(--color-text)]" />
               Jump to latest
             </button>
@@ -560,7 +560,7 @@ function SessionListItemRow({
           ? "bg-[color:var(--color-surface-2)]"
           : "hover:bg-[color:var(--color-surface-2)]"
       }`}
-    >
+      >
       <div className="mb-1 flex items-center justify-between gap-2">
         <span className="truncate font-mono text-[11px] text-[color:var(--color-text)]">
           {session.sessionId}
@@ -675,7 +675,7 @@ function MessageActionsMenu({
         className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--color-surface-2)] text-[color:var(--color-text)]"
         aria-label="Buka menu aksi pesan"
       >
-        ƒ<_
+        ...
       </button>
       {open && (
         <div className="absolute right-0 z-20 mt-1 w-40 rounded-md border border-[var(--color-border)] bg-[color:var(--color-surface)] text-[11px] shadow-md">
@@ -713,9 +713,7 @@ function MessageActionsMenu({
       )}
     </div>
   );
-}
-
-type MessageDetailsDrawerProps = {
+}type MessageDetailsDrawerProps = {
   message: MessageView | null;
   onClose: () => void;
 };
@@ -741,7 +739,7 @@ function MessageDetailsDrawer({
           type="button"
           onClick={onClose}
           className="rounded-md bg-[color:var(--color-surface-2)] px-2 py-1 text-[11px] font-medium text-[color:var(--color-text)]"
-        >
+      >
           Tutup
         </button>
       </div>
@@ -773,4 +771,7 @@ function MessageDetailsDrawer({
     </div>
   );
 }
+
+
+
 
